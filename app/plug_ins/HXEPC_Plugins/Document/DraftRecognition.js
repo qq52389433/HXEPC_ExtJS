@@ -1,4 +1,4 @@
-﻿//起草红头文 DraftRecognition
+//认质认价
 
 Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
     extend: 'Ext.container.Container',
@@ -9,11 +9,10 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
     initComponent: function () {
         var me = this;
 
-        //上传文档的doc关键字列表
-        me.docList = "";
-
+   
         //附件文件名的前缀
         me.docCode = "";
+        me.docFileName = "";
 
         //附件序号
         me.docUploadIndex = 0;
@@ -24,6 +23,40 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         //收发文单位列表初始数据
         me.recCompanyList = [];
         me.sendCompanyList = [];
+
+        //定义文件编码Panel
+        me.fileCodePanel = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.FileCodePanel');
+
+        //定义文件上传Panel
+        me.fileUploadPanel = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.FileUploadPanel', {
+            projectKeyword: me.projectKeyword, projectDirKeyword: me.projectDirKeyword
+        });
+
+        //设置上传控件为附件模式
+        me.fileUploadPanel.setAttaMode();
+
+        //me.fileUploadPanel.gridMaxHeight = me.container.lastBox.height - 40;
+        me.fileUploadPanel.setGridMinHeight(198);
+
+        me.fileUploadPanel.onFileEditButtonClick = function () {
+            me.editTopPanel.hide();
+            me.editBottomPanel.hide();
+            me.bottomButtonPanel.hide();
+            me.fileUploadPanel.setHeight(me.container.lastBox.height - 40);
+            me.fileUploadPanel.filegrid.setHeight(me.container.lastBox.height - 40);
+            winDraftRecognition.setTitle("起草认质认价单 - 编辑附件");
+            winDraftRecognition.closable = false;
+        };
+
+        //保存附件按钮事件
+        me.fileUploadPanel.onFileSaveButtonClick = function () {
+            me.editTopPanel.show();
+            me.editBottomPanel.show();
+            me.bottomButtonPanel.show();
+            //me.filegrid.setHeight(me.gridMinHeight);
+            winDraftRecognition.setTitle("起草认质认价单");
+            winDraftRecognition.closable = true;
+        };
 
         //定义区域combo初始数据
         me.areadata = [];
@@ -38,7 +71,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         me.recCompanydata = [];
 
         //来文单类型combo初始数据
-        me.rectypedata = [{ text: "联系单", value: "联系单" }, { text: "设计变更单", value: "设计变更单" }
+        me.rectypedata = [{ text: "", value: "" }, { text: "信函", value: "信函" }, { text: "设计变更单", value: "设计变更单" }
             , { text: "委托单", value: "委托单" }];
 
         //物资类型combo初始数据
@@ -68,28 +101,23 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             margin: '10 0 0 10', anchor: "80%", labelAlign: "left", width: 80//flex: 1
         });
 
-        //添加工程名称text
-        me.projectNameText = Ext.create("Ext.form.field.Text", {
-            xtype: "textfield", fieldLabel: "工程名称", labelWidth: 60,
-            margin: '10 10 0 10', anchor: "80%", labelAlign: "right", width: '50%'//flex: 1
+        //添加合同名称text
+        me.contractNameText = Ext.create("Ext.form.field.Text", {
+            xtype: "textfield", fieldLabel: "合同名称", labelWidth: 60, readOnly: true,
+            margin: '10 0 0 10', anchor: "80%", labelAlign: "right", width: '46%'//flex: 1
         });
 
         //添加合同号text
         me.contractCodeText = Ext.create("Ext.form.field.Text", {
-            xtype: "textfield", fieldLabel: "合同号", labelWidth: 60,
-            margin: '10 10 0 10', anchor: "80%", labelAlign: "right", width: '50%'//flex: 1
+            xtype: "textfield", fieldLabel: "合同号", labelWidth: 60, readOnly: true,
+            margin: '10 0 0 10', anchor: "80%", labelAlign: "right", width: '46%'//flex: 1
         });
 
 
-        //添加项目号text
-        me.sendCodeText = Ext.create("Ext.form.field.Text", {
-            xtype: "textfield", fieldLabel: "编号", labelWidth: 60, 
-            margin: '10 10 0 10', anchor: "80%", labelAlign: "right", width: '50%'//flex: 1
-        });
 
-        //添加来文单编号text
+        //添加来源文件编码text
         me.recCodeText = Ext.create("Ext.form.field.Text", {
-            xtype: "textfield", fieldLabel: "根据", labelWidth: 60, emptyText: "来文单编号", labelSeparator: '', // 去掉laebl中的冒号
+            xtype: "textfield", fieldLabel: "来源文件", labelWidth: 60, emptyText: "来源文件编码",// labelSeparator: '', // 去掉laebl中的冒号
             margin: '10 10 0 10', anchor: "80%", labelAlign: "right", width: 250
         });
 
@@ -108,7 +136,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         //定义下一流程状态用户Text
         me.nextStateUserText = Ext.create("Ext.form.field.Text", {
             xtype: "textfield",
-            fieldLabel: "施工经理", anchor: "80%", labelWidth: 60, labelAlign: "right", labelPad: 8, width: "40%",//width: 230, 
+            fieldLabel: "项目专工", anchor: "80%", labelWidth: 60, labelAlign: "right", labelPad: 8, width: "40%",//width: 230, 
             margin: '10 5 0 10', fieldStyle: ' background-image: none;'//红色边框//flex: 1
         });
 
@@ -148,7 +176,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             valueField: 'value', editable: false,//不可输入
             displayField: 'text', margin: '10 10 0 10',// 
             anchor: "80%", labelAlign: "right", labelPad: 8, width: 100,//
-            emptyText: "--请选择--", value: "联系单",
+            emptyText: "--请选择--", value: "",
             //fieldStyle: 'border-color: red; background-image: none;',//红色边框
             listeners:
             {
@@ -205,158 +233,16 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             value: ""
         });
 
-        //定义器具的model
-        Ext.define("contentModel", {
-            extend: "Ext.data.Model",
-            fields: ["no", "matName", "spec",
-                "meaUnit", "designNum", "brand",
-                "quantity", "audit", "price",
-                "costPrice", "centerPrice", "tenderPrice",
-                "auditPrice", "remark"],
-            url: "_blank",
-        });
-
-        me.contentStore = Ext.create('Ext.data.Store', {
-            autoDestroy: true,
-            model: contentModel,
-            sorters: [{
-                property: 'id',
-                direction: 'ASC'
-            }]
-        });
-
-        me.contentGrid = Ext.create('Ext.grid.Panel', {
-            //title: '输入文档的代码和描述',
-            store: me.contentStore,
-            margin: '0 10 0 10',
-            columns: [
-                { header: '序号', xtype: 'rownumberer', dataIndex: 'no', width: 30, align: 'center', sortable: false },
-                {
-                    header: '材料（设备）名称', dataIndex: 'matName', width: 150,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '规格型号技术参数', dataIndex: 'spec', width: 120,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '计量单位', dataIndex: 'meaUnit', width: 80,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '设计图号', dataIndex: 'designNum', width: 120,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '品牌', dataIndex: 'brand', width: 120,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '报审数量', dataIndex: 'quantity', width: 90,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '专业工程师审核意见', dataIndex: 'audit', width: 120,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '报审单价', dataIndex: 'price', width:90,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    text: '审核单价', columns: [
-                    {
-                        header: '项目造价员', dataIndex: 'costPrice', width: 90,
-                        editor: {
-                            allowBlank: false
-                        }
-                    },
-                    {
-                        header: '财务中心', dataIndex: 'centerPrice', width: 90,
-                        editor: {
-                            allowBlank: false
-                        }
-                    },
-                    {
-                        header: '招标部', dataIndex: 'tenderPrice', width: 90,
-                        editor: {
-                            allowBlank: false
-                        }
-                    }]
-                },
-                {
-                    header: '审核合价', dataIndex: 'auditPrice', width: 90,
-                    editor: {
-                        allowBlank: false
-                    }
-                },
-                {
-                    header: '备注', dataIndex: 'remark', width: 120,
-                    editor: {
-                        allowBlank: false
-                    }
-                }
-            ],
-            stripeRows: true, //斑马线效果  
-            plugins: [
-                me.cellEditing
-            ],
-            height: 300,
-            width: '100%',//400,
-            renderTo: Ext.getBody(),
-            selModel: {
-                selType: 'cellmodel'
-            },
-            listeners: {
-                "edit": function (editor, e) {//去除红色箭头
-                    e.record.commit();
-                }
-            }
-        });
-
-        //器具表格添加行
-        for (var i = 0; i < 10; i++) {
-            var rec = new contentModel({
-                name: ""
-            });
-            me.contentStore.insert(0, rec);
-        }
-
-        //选择专业按钮
-        me.editAttrButton = Ext.create("Ext.button.Button", {
-            text: "录入属性", margins: "10 0 0 10",
-            listeners: {
-                "click": function (btn, e, eOpts) {//添加点击按钮事件
-                    me.editFileAttr();
-                }
-            }
-        });
-
-        //选择专业按钮
-        me.professionButton = Ext.create("Ext.button.Button", {
+   
+        //选择合同按钮
+        me.contractNameButton = Ext.create("Ext.button.Button", {
             text: "..", margins: "10 0 0 0",
             listeners: {
                 "click": function (btn, e, eOpts) {//添加点击按钮事件
-                    var fmSelectProfession = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.SelectProfession', { title: "", mainPanelId: me.Id, projectKeyword: me.projectKeyword });
+                    var fmSelectContract = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.SelectContract', { title: "", mainPanelId: me.Id, projectKeyword: me.projectKeyword });
 
-                    winSelectProfession = Ext.widget('window', {
-                        title: '选择专业',
+                    winSelectContract = Ext.widget('window', {
+                        title: '选择合同',
                         width: 738,
                         height: 558,
                         minWidth: 738,
@@ -365,34 +251,36 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                         resizable: true,
                         modal: true,
                         closeAction: 'close', //close 关闭  hide  隐藏  
-                        items: fmSelectProfession,
+                        items: fmSelectContract,
                         defaultFocus: 'firstName'
                     });
 
-                    fmSelectProfession.projectKeyword = me.projectKeyword;
+                    fmSelectContract.projectKeyword = me.projectKeyword;
 
-                    winSelectProfession.show();
+                    winSelectContract.show();
 
 
                     //监听子窗口关闭事件
-                    winSelectProfession.on('close', function () {
+                    winSelectContract.on('close', function () {
                         if (window.parent.resultvalue != null && window.parent.resultvalue !== "") {
 
-                            var professionCode = "";
-                            var professionDesc = "";
-                            var professionValue = "";
+                            var contractCode = "";
+                            var contractDesc = "";
+                            var contractValue = "";
 
-                            professionCode = window.parent.resultvalue;
-                            professionDesc = window.parent.professiondesclist;
-                            //professionValue = window.parent.professionvaluelist;
+                            contractCode = window.parent.resultvalue;
+                            contractDesc = window.parent.contractdesclist;
 
-                            if (professionCode.indexOf(",") > 0) {
-                                // var words = professionCode.split(',')
-                                professionCode = professionCode.substring(0, professionCode.indexOf(","));
-                                professionDesc = professionDesc.substring(0, professionDesc.indexOf(";"));
+                            if (contractCode.indexOf(",") > 0) {
+                               
+                                contractCode = contractCode.substring(0, contractCode.indexOf(","));
+                                contractDesc = contractDesc.substring(0, contractDesc.indexOf(";"));
                             }
 
-                            me.professionText.setValue(professionCode);
+                            me.contractCodeText.setValue(contractCode);
+
+                            me.contractNameText.setValue(contractDesc);
+
 
                         }
                     });
@@ -400,54 +288,12 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             }
         });
 
-        //选择来文的文件类型按钮
-        me.receiveTypeButton = Ext.create("Ext.button.Button", {
+        //选择合同按钮
+        me.contractCodeButton = Ext.create("Ext.button.Button", {
             text: "..", margins: "10 0 0 0",
             listeners: {
                 "click": function (btn, e, eOpts) {//添加点击按钮事件
-                    var fmSelectReceiveType = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.SelectReceiveType', { title: "", mainPanelId: me.Id, projectKeyword: me.projectKeyword });
-
-                    winSelectReceiveType = Ext.widget('window', {
-                        title: '选择文件类型',
-                        width: 738,
-                        height: 558,
-                        minWidth: 738,
-                        minHeight: 558,
-                        layout: 'fit',
-                        resizable: true,
-                        modal: true,
-                        closeAction: 'close', //close 关闭  hide  隐藏  
-                        items: fmSelectReceiveType,
-                        defaultFocus: 'firstName'
-                    });
-
-                    fmSelectReceiveType.projectKeyword = me.projectKeyword;
-
-                    winSelectReceiveType.show();
-
-
-                    //监听子窗口关闭事件
-                    winSelectReceiveType.on('close', function () {
-                        if (window.parent.resultvalue != null && window.parent.resultvalue !== "") {
-
-                            var receiveTypeCode = "";
-                            var receiveTypeDesc = "";
-                            var receiveTypeValue = "";
-
-                            receiveTypeCode = window.parent.resultvalue;
-                            receiveTypeDesc = window.parent.receiveTypedesclist;
-                            //receiveTypeValue = window.parent.receiveTypevaluelist;
-
-                            if (receiveTypeCode.indexOf(",") > 0) {
-                                // var words = receiveTypeCode.split(',')
-                                receiveTypeCode = receiveTypeCode.substring(0, receiveTypeCode.indexOf(","));
-                                receiveTypeDesc = receiveTypeDesc.substring(0, receiveTypeDesc.indexOf(";"));
-                            }
-
-                            me.receiveTypeText.setValue(receiveTypeCode);
-
-                        }
-                    });
+                    me.contractNameButton.fireEvent('click');
                 }
             }
         });
@@ -462,25 +308,9 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             },
             margin: '0 0 0 0',// 
             items: [
-                  {
+      
 
-                      baseCls: 'my-panel-no-border',//隐藏边框
-                      layout: {
-                          type: 'hbox',
-                          pack: 'start',
-                          align: 'stretch'
-                      },
-                      items: [
-                         me.fProjectCodeText,
-                         //me.areaCombo,
-                         me.areaText,// me.areaButton,
-                         me.professionText, me.professionButton,
-                         me.receiveTypeText, me.receiveTypeButton,
-                         me.fNumberText, me.editionText,
-                         me.editAttrButton
-                      ],
-                      flex: 1
-                  },
+                     me.fileCodePanel,
                     {
 
                         baseCls: 'my-panel-no-border',//隐藏边框
@@ -490,22 +320,13 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                             align: 'stretch'
                         },
                         items: [
-                            me.projectNameText,
-                            me.contractCodeText
+                            me.contractNameText, me.contractNameButton,
+                            me.contractCodeText, me.contractCodeButton
                         ],
                         flex: 1
                     },
+                   
                      {
-                         layout: "hbox",
-                         width: '100%',
-                         align: 'stretch',
-                         pack: 'start',
-                         baseCls: 'my-panel-no-border',//隐藏边框
-                         items: [
-                           me.sendDateField,//发送日期
-                           me.sendCodeText
-                         ], flex: 1
-                     }, , {
                          layout: "hbox",
                          width: '100%',
                          align: 'stretch',
@@ -522,18 +343,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
 			            margin: '10 0 10 20',
 			            text:"进行认质认价工作，以便采购并施工："
 			        },
-                     {
-                         layout: "hbox",
-                         width: '100%',
-                         align: 'stretch',
-                         pack: 'start',
-                         //height: 125,
-                         margin: '0 0 0 0',
-                         baseCls: 'my-panel-no-border',//隐藏边框
-                         items: [
-                               me.contentGrid
-                         ]//, flex: 1
-                     }
+                     
             ]
         });
 
@@ -616,33 +426,8 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                   margin: '10 0 0 0',// 
                   items: [
                      me.editTopPanel,
-                     {
-                         layout: "vbox",
-                         width: '100%', baseCls: 'my-panel-no-border',//隐藏边框
-                         align: 'stretch', margin: '0 10 0 0', padding: '0 0 0 0',
-                         pack: 'start', height: 100,
-                         items: [
-                             {
-                                 layout: "hbox",
-                                 width: '100%', baseCls: 'my-panel-no-border',//隐藏边框
-                                 align: 'stretch', margin: '10 0 0 0', padding: '0 0 0 0',
-                                 pack: 'start',
-                                 items: [
-                                     {
-                                         layout: "vbox",
-                                         //width: '100%',
-                                         width: 60,
-                                         baseCls: 'my-panel-no-border',//隐藏边框
-                                         align: 'stretch', margin: '5 5 0 12', padding: '0 0 0 0',
-                                         pack: 'start', items: [
-                                          me.fileEditButton,
-                                           me.FileUploadButton,
-                                         me.fileSaveButton
-                                         ]
-                                     }, me.filegrid]
-                             }
-                         ], flex: 1
-                     }, me.editBottomPanel
+                     me.fileUploadPanel,
+                     me.editBottomPanel
                    
 
                   ], flex: 1
@@ -655,7 +440,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         ];
 
         //获取打开表单时的默认参数
-        me.sendGetDraftRecognitionDefault();
+        //me.sendGetDraftRecognitionDefault();
 
         me.callParent(arguments);
 
@@ -663,7 +448,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
 
 
     //获取起草信函表单默认参数
-    sendGetDraftRecognitionDefault: function () {
+    sendGetDraftRecognitionDefault: function (funCallback) {
         var me = this;
 
         //通过extjs的ajax获取操作全部名称
@@ -675,14 +460,14 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                 sid: localStorage.getItem("sid"), ProjectKeyword: me.projectKeyword
             },
             success: function (response, options) {
-                me.sendGetDraftRecognitionDefault_callback(response, options);//, funCallback);
+                me.sendGetDraftRecognitionDefault_callback(response, options, funCallback);
 
             }
         });
     },
 
     //处理获取发文处理表单默认参数的返回
-    sendGetDraftRecognitionDefault_callback: function (response, options) {
+    sendGetDraftRecognitionDefault_callback: function (response, options,funCallback) {
         var me = this;
 
         //获取数据后，更新窗口
@@ -692,21 +477,57 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             var recod = eval(res.data[0]);
 
             var strRootProjectCode = recod.RootProjectCode;
+            var strRootProjectDesc = recod.RootProjectDesc;
+
             var strDocNumber = recod.DocNumber;
             me.recCompanyList = eval(recod.RecCompanyList);
             me.sendCompanyList = eval(recod.SendCompanyList);
             var sourceCompany = recod.SourceCompany;//项目所属公司
 
-            if (strRootProjectCode === "") {
-                me.fProjectCodeText.setWidth(60);
-               // me.projectCodeText.setWidth(60);
+            var strFormClassCode = "AAA"
+            var strProjectDesc = "认质认价";
 
-                me.areaText.setFieldLabel("");
-               // me.sendCompanyCombo.setFieldLabel("");
+            //默认设置为不新建文件编码
+            me.fileCodePanel.setNeedNewFileCode(true);
+
+            //设置发起目录和项目所在目录
+            me.fileCodePanel.projectKeyword = me.projectKeyword;//项目所在目录
+            me.fileCodePanel.projectDirKeyword = me.projectKeyword;//当前目录
+
+            //设置收发文单位的单位类型
+            me.fileCodePanel.setFormClass(strFormClassCode, strProjectDesc);
+            //设置项目管理类文件里项目的代码和描述
+            me.fileCodePanel.setRootProject(strRootProjectCode, strRootProjectDesc);
+
+            //认质认价默认都是项目发到部门
+            //me.fileCodePanel.setDocUnitClass("项目", "部门");
+            if (strRootProjectCode === undefined || strRootProjectCode === "") {
+                //运营信函
+
+                me.fileCodePanel.setDocUnitClass("部门", "部门");
+                //隐藏发给项目单选框
+                //me.fileCodePanel.toProjectCheckBox.setVisible(false);
+
+
             } else {
-               // me.projectCodeText.setValue(strRootProjectCode);
-                me.fProjectCodeText.setValue(strRootProjectCode);
+                //项目（非运营）信函
+                me.fileCodePanel.setDocUnitClass("项目", "项目");
+
             }
+
+            //设置发文单位代码
+            me.fileCodePanel.setSendCompany(sourceCompany);
+
+            //设置文件编码Panel的各个按钮的用户事件
+            me.fileCodePanel.AfterSelectRecCompany = function (code, desc) {
+                //me.deliveryUnitText.setValue(desc);
+            }
+
+            //设置第一个文件是正件
+            //me.fileCodePanel.firstFileIsPositive = true;
+
+            //me.fileCodePanel.setFirstFileIsPositive(true);
+
 
             me.fNumberText.setValue(strDocNumber);
 
@@ -746,6 +567,8 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                 
                 //me.senderText.setValue(companyDesc);
             }
+
+            funCallback();
         }
     },
 
@@ -753,10 +576,91 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
     send_draft_document: function () {
         var me = this;
 
-        if (me.nextStateUserList === undefined || me.nextStateUserList === "") {
-            Ext.Msg.alert("错误信息", "请选择施工经理！");
+        //0.用户选择所有需要上传的文件，并勾选正件
+
+        //1.判断是否有选择了文件，并勾选了唯一一个文件
+
+        //2.上传所有文件
+
+        //3.获取勾选的文件
+
+        //4.把勾选的文件的属性，修改为正件的属性
+
+        //检查文件编码
+        var checkResult = me.fileCodePanel.checkFileCodeFill();
+        if (checkResult != "true") {
+            Ext.Msg.alert("错误信息", checkResult);
             return;
         }
+
+        if (me.nextStateUserList === undefined || me.nextStateUserList === "") {
+            Ext.Msg.alert("错误信息", "请选择项目专工！");
+            return;
+        }
+
+        
+
+       // 1.判断是否有选择了文件，并勾选了唯一一个文件
+        if (me.fileUploadPanel.FileUploadButton.uploader.uploader.files.length > 0) {
+
+            var grid = me.fileUploadPanel.filegrid;
+
+            var rs = grid.getSelectionModel().getSelection();//获取选择的文档
+
+            if (rs === undefined || rs === null || rs.length <= 0) {
+
+                Ext.Msg.alert("错误信息", "请勾选认质认价单文件！");
+                return;
+ 
+            }
+            if (rs.length > 1) {
+
+                Ext.Msg.alert("错误信息", "请勾选唯一的认质认价单文件！");
+                return;
+
+            }
+            ////2.上传所有文件
+            me.fileUploadPanel.afterUploadAllFile = function () {
+                me.set_positive_file();
+            };
+
+            me.fileUploadPanel.send_upload_file();
+        } else {
+            //当没有附件时，处理返回事件
+            //me.set_positive_file();
+            Ext.Msg.alert("错误信息", "请选择需要上传的文件！");
+        }
+
+    },
+
+    set_positive_file:function(){
+    
+        var me = this;
+
+        //3.获取勾选的文件
+        var grid = me.fileUploadPanel.filegrid;
+
+        var rs = grid.getSelectionModel().getSelection();//获取选择的文档
+
+        if (rs !== null && rs.length > 0) {
+            var rec = rs[0];//第一个文档
+            me.docKeyword = rec.data.docKeyword;
+            me.docFileName = rec.data.name;
+        }
+        else {
+            Ext.Msg.alert("错误信息", "设置认质认价单出错！");
+            return;
+        }
+        //4.把勾选的文件的属性，修改为正件的属性
+
+        //获取文件编码
+        var fileCode = me.fileCodePanel.getFileCode();
+
+        //获取文件ID
+        var fileId = me.fileCodePanel.getFileId();
+
+        //获取文件类型代码
+        var docIdentifier = me.fileCodePanel.getDocIdentifier();
 
         //项目代码
         var fProjectCode = me.fProjectCodeText.value;
@@ -772,17 +676,17 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         var edition = me.editionText.value;
 
         //获取文件编码
-        var fileCode = fProjectCode + "-" + area + "-" + profession + "-" + receiveType + "-" + fNumber + "-" + edition;
+        //var fileCode = fProjectCode + "-" + area + "-" + profession + "-" + receiveType + "-" + fNumber + "-" + edition;
 
         //获取工程名称
-        var projectName = me.projectNameText.value;
+        var projectName = me.contractNameText.value;
         //合同号
         var contractCode = me.contractCodeText.value;
 
         //日期
         var sendDate = me.sendDateField.value;
         //编号
-        var sendCode = me.sendCodeText.value;
+        var sendCode = "";// me.sendCodeText.value;
 
         //来文编号
         var recCode = me.recCodeText.value;
@@ -791,36 +695,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         //采购类型 （材料或者设备）e:\qgy2017\cdmsweb\cdmsweb\hxepc_plugins\document\draftdocumentmenu.cs
         var materialType = me.materialtypeCombo.value;
 
-        //获取文件列表
-        var contentArray = [];
-        for (var i = 0; i < me.contentStore.getCount() ; i++) {
-            var record = me.contentStore.getAt(i);
-
-            var matName = record.get('matName');
-            var spec = record.get('spec');
-            var meaUnit = record.get('meaUnit');
-            var designNum = record.get('designNum');
-            var brand = record.get('brand');
-            var quantity = record.get('quantity');
-            var audit = record.get('audit');
-            var price = record.get('price');
-            var costPrice = record.get('costPrice');
-            var centerPrice = record.get('centerPrice');
-            var tenderPrice = record.get('tenderPrice');
-            var auditPrice = record.get('auditPrice');
-            var remark = record.get('remark');
-
-            var fa = 
-                {
-                    matName: matName, spec: spec, meaUnit: meaUnit,
-                    designNum: designNum, brand: brand, quantity: quantity,
-                    audit: audit, price: price, costPrice: costPrice,
-                    centerPrice: centerPrice, tenderPrice: tenderPrice, auditPrice: auditPrice,
-                    remark: remark
-                };
-  
-            contentArray.push(fa);
-        }
+      
 
         //获取表单数据，转换成JSON字符串
         var docAttr =
@@ -832,11 +707,12 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             { name: 'sendCode', value: sendCode },
             { name: 'recCode', value: recCode },
             { name: 'recType', value: recType },
-            { name: 'materialType', value: materialType }
+            { name: 'materialType', value: materialType },
+            { name: 'fileId', value: fileId },
         ];
 
         var docAttrJson = Ext.JSON.encode(docAttr);
-        var contentJson = Ext.JSON.encode(contentArray);
+        var cataAttrJson = Ext.JSON.encode(me.fileCodePanel.cataAttrArray);
 
         Ext.MessageBox.wait("正在生成认质认价单，请稍候...", "等待");
 
@@ -847,7 +723,8 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             params: {
                 C: "AVEVA.CDMS.HXEPC_Plugins.Document", A: "DraftRecognition",
                 sid: localStorage.getItem("sid"), ProjectKeyword: me.projectKeyword,
-                DocAttrJson: docAttrJson, ContentJson: contentJson
+                DocAttrJson: docAttrJson, CataAttrJson: cataAttrJson, DocKeyword: me.docKeyword,
+                FileName: me.docFileName
             },
             success: function (response, options) {
                 //me.draft_document_callback(response, options, "");//, me.projectKeyword, closeWin);
@@ -862,36 +739,28 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                     var recod = eval(res.data[0]);
 
                     //处理返回事件
-                    me.draft_document_callback(response, options, "");//, me.projectKeyword, closeWin);
+                    //me.draft_document_callback(response, options, "");//, me.projectKeyword, closeWin);
 
 
                     me.docKeyword = recod.DocKeyword;//获取联系单文档id
-                    me.docList = recod.DocList;//获取流程文档列表
+                    //me.fileUploadPanel.docList = recod.DocList;//获取流程文档列表
                     me.newProjectKeyword = recod.ProjectKeyword;//获取新建的目录id
-                    //获取附件文件名的前缀
-                    //me.docCode = recod.DocCode;
 
-                    //if (me.FileUploadButton.uploader.uploader.files.length > 0) {
-                    //    ////当有附件时，创建DOC文档成功后，上传附件
-                    //    me.FileUploadButton.uploader.start();
+                    me.draft_document_callback(response, options, "");
 
-                    //    Ext.MessageBox.wait("正在上传附件，请稍候...", "等待");
+                    //me.fileUploadPanel.docKeyword = me.docKeyword;
 
-                    //    var int = window.setInterval(function () {
-                    //        //上传附件完毕
-                    //        if (me.uploadCompleteState === true) {
-                    //            Ext.MessageBox.close();//关闭等待对话框
-                    //            //处理返回事件
-                    //            me.draft_document_callback(response, options, "");//, me.projectKeyword, closeWin);
-                    //            //me.send_create_doc_callback(projectKeyword, docKeyword, me.docList, true);
-                    //            //停止线程
-                    //            window.clearInterval(int);
-                    //        }
-                    //    }, 500);
+                    //if (me.fileUploadPanel.FileUploadButton.uploader.uploader.files.length > 0) {
+                    //    //上传完所有文件后，刷新表单
+                    //    me.fileUploadPanel.afterUploadAllFile = function () {
+                    //        //me.refreshWin(me.projectKeyword, true);
+                    //        me.draft_document_callback(response, options, "");
+                    //    };
+
+                    //    me.fileUploadPanel.send_upload_file();
                     //} else {
                     //    //当没有附件时，处理返回事件
-                        me.draft_document_callback(response, options, "");//, me.projectKeyword, closeWin);
-                    //    //me.send_create_doc_callback(projectKeyword, docKeyword, me.docList, true);
+                    //    me.draft_document_callback(response, options, "");
                     //}
                 } else {
                     var errmsg = res.msg;
@@ -908,6 +777,8 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
     draft_document_callback: function (response, options) {
         var me = this;
 
+        var sendUnitCode = me.fileCodePanel.getSendCompanyCode();
+
         //获取审批路径Combo
         //var approvpath = me.approvpathCombo.value;
 
@@ -920,7 +791,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             params: {
                 C: "AVEVA.CDMS.HXEPC_Plugins.Document", A: "RecognitionStartWorkFlow",
                 sid: localStorage.getItem("sid"), docKeyword: me.docKeyword,
-                docList: me.docList, //ApprovPath: approvpath,
+                docList: me.fileUploadPanel.docList, //ApprovPath: approvpath,
                 UserList: me.nextStateUserList
             },
             success: function (response, options) {
@@ -939,186 +810,13 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
                 } else {
                     var errmsg = res.msg;
                     Ext.Msg.alert("错误信息", errmsg);
-                    winSendDocument.close();
+                    winDraftRecognition.close();
                 }
             }
 
         })
     },
 
-    //draft_document_callback: function (response, options, parentKeyword) {
-    //    var me = this;
-    //    var res = Ext.JSON.decode(response.responseText, true);
-    //    var state = res.success;
-    //    if (state === false) {
-    //        var errmsg = res.msg;
-    //        Ext.Msg.alert("错误信息", errmsg);
-    //    }
-    //    else {
-
-    //        Ext.MessageBox.close();//关闭等待对话框
-
-    //        Ext.require('Ext.ux.Common.comm', function () {
-
-    //            winDraftRecognition.close();
-
-    //            var projectKeyword = res.data[0].ProjectKeyword;
-
-    //            me.refreshWin(projectKeyword, false);
-
-    //            //创建流程
-    //            //参数：doclist,wfKeyword,userlist,callback_fun
-    //            //StartNewWorkFlow(projectKeyword, "CREATEPROJECT", "", function (res, WorkFlowKeyword, CuWorkStateCode) {
-    //            //    me.refreshWin(projectKeyword, false);
-    //            //})
-    //        });
-    //    }
-    //},
-
-    //修改文件属性
-    editFileAttr: function () {
-        var me = this;
-
-            //弹出操作窗口
-            var _fmEditFileProperties = Ext.create('Ext.plug_ins.HXEPC_Plugins.Document.EditFileProperties', {
-                title: "", projectKeyword: me.projectKeyword, projectDirKeyword: me.projectDirKeyword,
-                docClass: me.docClass
-            });
-
-            winEditFileProperties = Ext.widget('window', {
-                title: '修改文件著录属性',
-                closeAction: 'hide',
-                width: 780,
-                height: 466,
-                minWidth: 300,
-                minHeight: 300,
-                layout: 'fit',
-                resizable: true,
-                modal: true,
-                closeAction: 'close', //close 关闭  hide  隐藏  
-                items: _fmEditFileProperties,
-                defaultFocus: 'firstName'
-            });
-
-      
-            _fmEditFileProperties.fileCodeTypeCombo.setValue("项目管理类");
-            _fmEditFileProperties.setIsProjectFile();
-
-            _fmEditFileProperties.projectKeyword = me.projectKeyword;
-            _fmEditFileProperties.projectDirKeyword = me.projectKeyword;
-
-
-            _fmEditFileProperties.setFilePropertiesDefault(rec.data);
-
-            window.parent.resultarray = undefined;
-
-        // winImportFile.hide();
-            winEditFileProperties.show();
-
-            _fmEditFileProperties.projectCodeText.setValue(me.fProjectCodeText.value);
-
-            _fmEditFileProperties.fProjectCodeText.setValue(me.fProjectCodeText.value);
-
-        //_fmEditFileProperties.projectDescText.setValue(projectDesc);
-
-            //监听子窗口关闭事件
-            winEditFileProperties.on('close', function () {
-                //winImportFile.show();
-
-                if (window.parent.resultarray === undefined) { return; }
-                var res = window.parent.resultarray[0];
-
-                me.areaText.setValue(res.crew + res.factorycode + res.systemcode);
-
-                me.professionText.setValue(res.major);
-
-                me.receiveTypeText.setValue(res.receiveType);
-
-                me.fNumberText.setValue(res.fNumber);
-
-                me.editionText.setValue(res.edition);
-                ////文件编码
-                //rec.set('code', res.code);
-                ////文件题名
-                //rec.set('desc', res.desc);
-                ////档号
-                //rec.set('reference', res.reference);
-                ////卷内序号
-                //rec.set('volumenumber', res.volumenumber);
-                ////责任人
-                //rec.set('responsibility', res.responsibility);
-                ////页数
-                //rec.set('page', res.page);
-                ////份数
-                //rec.set('share', res.share);
-                ////介质
-                //rec.set('medium', res.medium);
-                ////语种
-                //rec.set('languages', res.languages);
-                ////项目名称
-                //rec.set('proname', res.proname);
-                ////项目代码
-                //rec.set('procode', res.procode);
-                ////专业
-                //rec.set('major', res.major);
-                ////机组
-                //rec.set('crew', res.crew);
-                ////厂房代码
-                //rec.set('factorycode', res.factorycode);
-                ////厂房名称
-                //rec.set('factoryname', res.factoryname);
-                ////系统代码
-                //rec.set('systemcode', res.systemcode);
-                ////系统名称
-                //rec.set('systemname', res.systemname);
-                ////关联文件编码
-                //rec.set('relationfilecode', res.relationfilecode);
-                ////关联文件题名
-                //rec.set('relationfilename', res.relationfilename);
-                ////案卷规格
-                //rec.set('filespec', res.filespec);
-                ////归档单位
-                //rec.set('fileunit', res.fileunit);
-                ////密级
-                //rec.set('secretgrade', res.secretgrade);
-                ////保管时间
-                //rec.set('keepingtime', res.keepingtime);
-                ////归档文件清单编码
-                //rec.set('filelistcode', res.filelistcode);
-                ////归档日期
-                //rec.set('filelisttime', res.filelisttime);
-                ////排架号
-                //rec.set('racknumber', res.racknumber);
-                ////备注
-                //rec.set('note', res.note);
-
-                ////是否新建文件编码
-                //rec.set('isNewCode', res.isNewCode);
-                ////文件编码类型
-                //rec.set('fileCodeType', res.fileCodeType);
-
-                ////文件类型
-                //rec.set('receiveType', res.receiveType);
-                ////流水号
-                //rec.set('fNumber', res.fNumber);
-                ////版本
-                //rec.set('edition', res.edition);
-
-                ////工作分类代码
-                //rec.set('workClass', res.workClass);
-                ////工作分项代码
-                //rec.set('workSub', res.workSub);
-                ////部门代码
-                //rec.set('department', res.department);
-
-                //rec.commit();
-
-                //Ext.Msg.alert("错误", Keyword + "," + resArry[0].page);
-
-
-            });
-     
-    },
 
     //获取流水号
     getRunNum: function () {
