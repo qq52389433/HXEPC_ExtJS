@@ -71,7 +71,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
         me.recCompanydata = [];
 
         //来文单类型combo初始数据
-        me.rectypedata = [{ text: "", value: "" }, { text: "信函", value: "信函" }, { text: "设计变更单", value: "设计变更单" }
+        me.rectypedata = [{ text: "联系单", value: "联系单" }, { text: "设计变更单", value: "设计变更单" }
             , { text: "委托单", value: "委托单" }];
 
         //物资类型combo初始数据
@@ -117,7 +117,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
 
         //添加来源文件编码text
         me.recCodeText = Ext.create("Ext.form.field.Text", {
-            xtype: "textfield", fieldLabel: "来源文件", labelWidth: 60, emptyText: "来源文件编码",// labelSeparator: '', // 去掉laebl中的冒号
+            xtype: "textfield", fieldLabel: "根据", labelWidth: 60, emptyText: "来源文件编码", labelSeparator: '', // 去掉laebl中的冒号
             margin: '10 10 0 10', anchor: "80%", labelAlign: "right", width: 250
         });
 
@@ -176,7 +176,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             valueField: 'value', editable: false,//不可输入
             displayField: 'text', margin: '10 10 0 10',// 
             anchor: "80%", labelAlign: "right", labelPad: 8, width: 100,//
-            emptyText: "--请选择--", value: "",
+            emptyText: "--请选择--", value: "联系单",
             //fieldStyle: 'border-color: red; background-image: none;',//红色边框
             listeners:
             {
@@ -484,7 +484,7 @@ Ext.define('Ext.plug_ins.HXEPC_Plugins.Document.DraftRecognition', {
             me.sendCompanyList = eval(recod.SendCompanyList);
             var sourceCompany = recod.SourceCompany;//项目所属公司
 
-            var strFormClassCode = "AAA"
+            var strFormClassCode = "ECF"
             var strProjectDesc = "认质认价";
 
             //默认设置为不新建文件编码
